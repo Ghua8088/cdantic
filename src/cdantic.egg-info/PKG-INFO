@@ -1,0 +1,114 @@
+Metadata-Version: 2.4
+Name: cdantic
+Version: 0.1.0
+Summary: Type-safe Ctypes bindings using Pydantic models.
+Author-email: Pytron Team <dev@pytron.io>
+License: MIT
+Project-URL: Homepage, https://github.com/pytron-org/cdantic
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: pydantic>=2.0.0
+
+# C-Dantic
+
+**Type-Safe Foreign Function Interface for Python**
+
+C-Dantic is an enterprise-grade compatibility layer that bridges Python's Pydantic data modeling with standard `ctypes`. It introduces runtime type validation, memory layout management, and modern developer ergonomics to low-level systems programming.
+
+## Overview
+
+Python's standard `ctypes` library is powerful but prone to memory safety errors. A single mismatched type—such as passing a string pointer to an integer field—can corrupt memory or cause an immediate segmentation fault (Access Violation).
+
+C-Dantic acts as a safety shield between dynamic Python code and rigid C memory structures. By defining C-structs using Pydantic models, developers gain:
+
+1.  **Runtime Integrity**: Invalid data types are caught by Pydantic validators before they touch C memory.
+2.  **Modern Syntax**: Use standard Python type hints (`Annotated`, `int`) instead of arcane `ctypes` syntax.
+3.  **Automatic Memory Management**: Alignment, padding, and layout are handled automatically.
+4.  **Serialization**: Native data structures can be instantaneously serialized to JSON for logging and debugging.
+
+## Features
+
+### Type-Safe Structures (`CStruct`)
+Replace `ctypes.Structure` with Pydantic models. C-Dantic ensures that the Python object you create exactly parses into the binary format the C-compiler expects.
+
+### Safe Callbacks (`CCallback`)
+Define system callbacks (hooks, event handlers) using standard Python function signatures. C-Dantic inspects the type hints and generates the correct `CFUNCTYPE` thunk automatically.
+
+### Pointer Hydration
+Seamlessly convert raw memory pointers (e.g., from API return values) back into validated, high-level Python objects using `from_c_pointer()`.
+
+## Installation
+
+```bash
+pip install cdantic
+```
+
+## Documentation
+
+### Defining Structures
+
+Use `Annotated` to bind a Python type to its corresponding C-type memory layout.
+
+```python
+from typing import Annotated
+from cdantic import CStruct
+import ctypes
+
+class WindowRect(CStruct):
+    left: Annotated[int, ctypes.c_long]
+    top: Annotated[int, ctypes.c_long]
+    right: Annotated[int, ctypes.c_long]
+    bottom: Annotated[int, ctypes.c_long]
+```
+
+### Validation (The Safety Shield)
+
+The primary value proposition of C-Dantic is preventing undefined behavior through validation.
+
+```python
+try:
+    # In standard ctypes, this incorrect type would cause a SegFault 
+    # or silent memory corruption.
+    rect = WindowRect(left=0, top="invalid_string", right=100, bottom=100)
+    
+except Exception as e:
+    # With C-Dantic, it is caught safely in Python user-space.
+    print(f"Validation Error: {e}")
+```
+
+### System Callbacks
+
+Converting Python methods to C-compatible pointers is simplified with the `CCallback` utility.
+
+```python
+from cdantic import CCallback
+
+def my_hook(a: int, b: int) -> int:
+    return a + b
+
+# Generate the C-callable function pointer
+c_callback = CCallback(my_hook).c_callback
+```
+
+### Interoperability
+
+C-Dantic objects expose their underlying `ctypes` structure via `.to_c()`, making them fully compatible with existing `ctypes` library calls.
+
+```python
+# Create validated object
+rect = WindowRect(left=0, top=0, right=1920, bottom=1080)
+
+# Pass to native API
+user32.GetWindowRect(hwnd, ctypes.byref(rect.to_c()))
+
+# Serialize for logs
+print(rect.model_dump_json())
+# Output: {"left": 0, "top": 0, "right": 1920, "bottom": 1080}
+```
+
+## License
+
+MIT License.
