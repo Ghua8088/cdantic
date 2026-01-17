@@ -19,22 +19,27 @@ class ExampleStruct(CStruct):
     y: int
 
 def test_binding_safety():
+    is_win = sys.platform == "win32"
+    lib_name = "kernel32" if is_win else "libc"
+    func_name = "GetCurrentProcessId" if is_win else "getpid"
+
     class MockEngine:
-        # Use GetTickCount from kernel32 (returns int, takes no args)
-        @CFunction(func_name="GetTickCount")
-        def get_ticks(self) -> int: ...
+        # Use a platform-appropriate function to test binding
+        @CFunction(func_name=func_name)
+        def get_id(self) -> int: ...
     
     engine = MockEngine()
     
     # Attempting to call without binding should raise LibraryNotBoundError
     with pytest.raises(LibraryNotBoundError):
-        engine.get_ticks()
+        engine.get_id()
         
     # Bind it
-    bind_library(engine, "kernel32")
+    bind_library(engine, lib_name)
     # Should work now
-    res = engine.get_ticks()
+    res = engine.get_id()
     assert isinstance(res, int)
+    assert res > 0
 
 def test_struct_abi_helpers():
     class Point(CStruct):

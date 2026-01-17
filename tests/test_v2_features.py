@@ -5,10 +5,10 @@ from typing import Annotated
 
 # --- Annotated Syntax Test ---
 class RectAnnotated(CStruct):
-    left: Annotated[int, ctypes.c_long]
-    top: Annotated[int, ctypes.c_long]
-    right: Annotated[int, ctypes.c_long]
-    bottom: Annotated[int, ctypes.c_long]
+    left: Annotated[int, ctypes.c_int]
+    top: Annotated[int, ctypes.c_int]
+    right: Annotated[int, ctypes.c_int]
+    bottom: Annotated[int, ctypes.c_int]
 
 def test_annotated_syntax():
     r = RectAnnotated(left=10, top=10, right=100, bottom=100)
@@ -16,15 +16,15 @@ def test_annotated_syntax():
     assert isinstance(c_r, ctypes.Structure)
     assert c_r.left == 10
     
-    # Check memory size (4 longs * 4 bytes = 16)
+    # Check memory size (4 ints * 4 bytes = 16)
     assert ctypes.sizeof(c_r) == 16 
 
 # --- legacy CField Syntax Test ---
 class RectLegacy(CStruct):
-    left: int = CField(ctypes.c_long)
-    top: int = CField(ctypes.c_long)
-    right: int = CField(ctypes.c_long)
-    bottom: int = CField(ctypes.c_long)
+    left: int = CField(ctypes.c_int)
+    top: int = CField(ctypes.c_int)
+    right: int = CField(ctypes.c_int)
+    bottom: int = CField(ctypes.c_int)
 
 def test_legacy_syntax():
     r = RectLegacy(left=10, top=10, right=100, bottom=100)

@@ -3,14 +3,14 @@ from cdantic.types import c_field
 import ctypes
 
 class Point(CStruct):
-    x: int = c_field(ctypes.c_long)
-    y: int = c_field(ctypes.c_long)
+    x: int = c_field(ctypes.c_int)
+    y: int = c_field(ctypes.c_int)
 
 class Rect(CStruct):
-    left: int = c_field(ctypes.c_long)
-    top: int = c_field(ctypes.c_long)
-    right: int = c_field(ctypes.c_long)
-    bottom: int = c_field(ctypes.c_long)
+    left: int = c_field(ctypes.c_int)
+    top: int = c_field(ctypes.c_int)
+    right: int = c_field(ctypes.c_int)
+    bottom: int = c_field(ctypes.c_int)
 
 def test_basic_struct():
     p = Point(x=10, y=20)
@@ -19,8 +19,8 @@ def test_basic_struct():
     assert isinstance(c_p, ctypes.Structure)
     assert c_p.x == 10
     assert c_p.y == 20
-    assert ctypes.sizeof(c_p) == 8 # 2 * 4 bytes (long) on 32-bit or usually 4 bytes. 
-    # c_long is usually 4 bytes (32-bit int) even on 64-bit windows.
+    assert ctypes.sizeof(c_p) == 8 # 2 * 4 bytes (int)
+    # c_int is consistently 4 bytes on Windows and Linux x64.
 
 def test_round_trip():
     p = Point(x=55, y=99)

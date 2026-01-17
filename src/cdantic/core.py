@@ -1,4 +1,5 @@
 import ctypes
+import ctypes.util
 from typing import Type, Any, Dict, get_origin, get_args, ClassVar, Annotated, get_type_hints
 from pydantic import BaseModel
 
@@ -231,9 +232,21 @@ class CFunction:
             if not self._lib:
                 try:
                     target_lib = self.lib_name
-                    if target_lib == 'user32': self._lib = ctypes.windll.user32
-                    elif target_lib == 'kernel32': self._lib = ctypes.windll.kernel32
-                    else: self._lib = ctypes.CDLL(target_lib)
+                    if target_lib == 'user32':
+                        if hasattr(ctypes, 'windll'):
+                            self._lib = ctypes.windll.user32
+                        else:
+                            raise CdanticError("user32 is only available on Windows.")
+                    elif target_lib == 'kernel32':
+                        if hasattr(ctypes, 'windll'):
+                            self._lib = ctypes.windll.kernel32
+                        else:
+                            raise CdanticError("kernel32 is only available on Windows.")
+                    elif target_lib == 'libc':
+                        path = ctypes.util.find_library('c')
+                        self._lib = ctypes.CDLL(path)
+                    else:
+                        self._lib = ctypes.CDLL(target_lib)
                 except Exception as e:
                     raise CdanticError(f"Failed to load library '{target_lib}': {e}")
                     
